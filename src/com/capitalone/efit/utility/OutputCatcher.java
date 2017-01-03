@@ -11,13 +11,12 @@ import java.util.List;
  * Created by ndb338 on 12/29/16.
  */
 public class OutputCatcher extends Thread {
-    public List<String> getLines() {
+    public List<Line> getLines() {
         return Lines;
     }
 
-    private final List<String> Lines =new ArrayList<>();
+    private final List<Line> Lines =new ArrayList<>();
     InputStream inputStream;
-    String label;
 
     OutputCatcher(InputStream is)
     {
@@ -32,7 +31,7 @@ public class OutputCatcher extends Thread {
             BufferedReader br = new BufferedReader(isr);
             String line=null;
             while ( (line = br.readLine()) != null) {
-                Lines.add(line);
+                Lines.add(new Line(line));
             }
                 //System.out.println(label + ">" + line);
         } catch (IOException ioe)

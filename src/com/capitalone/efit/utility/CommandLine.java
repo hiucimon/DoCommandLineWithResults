@@ -68,7 +68,44 @@ public class CommandLine {
         CommandLine c=new CommandLine();
         int r=c.RunCommandWithResults("clamscan -v DoCommandLineWithResults.iml");
         System.out.println("Results="+r);
-        c.stdout.getLines().forEach(l->System.out.println("My command returned:  "+l));
+
+        c.stdout.getLines().forEach(
+                l->{
+                    String[] parts = l.data.split("\\s*:\\s*");
+                    if (parts.length<2) {
+                        //skip it
+                        //System.out.println("vvvvvv---Do nothing to this line");
+                    } else if (parts[1].equals("OK")) {
+                        //System.out.println("------OK");
+                    } else {
+                        parts[0]=parts[0].replace(' ','_');
+                        System.out.println("----- Massage the data to be usable:"+parts[0]+":"+parts[1]+":");
+                        String[] part2 = parts[1].split(" ");
+                        if (part2.length>1) {
+                            Double w1;
+                            float w2;
+                            switch (part2[1].toLowerCase()) {
+                                case "kb":  w1=Double.parseDouble(part2[0]);
+                                            System.out.println(parts[0]+":"+w1*1000.0);
+                                    break;
+                                case "mb":w1=Double.parseDouble(part2[0]);
+                                    System.out.println(parts[0]+":"+w1*1000000.0);
+                                    break;
+                                case "gb":w1=Double.parseDouble(part2[0]);
+                                    System.out.println(parts[0]+":"+w1*1000000000.0);
+                                    break;
+                                case "sec":w2=Float.parseFloat(part2[0]);
+                                    System.out.println(parts[0]+":"+w2);
+                                    break;
+                                default:
+                            }
+                        }
+                    }
+                    //System.out.println("My command returned:  "+l);
+                }
+        );
+
+
         int r2=c.RunCommandWithResults("clamscan -v DoCommandLineWithResults.iml",1);
         System.out.println("Results="+r2);
         c.stdout.getLines().forEach(l->System.out.println("My command returned:  "+l));
