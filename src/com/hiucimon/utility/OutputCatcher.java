@@ -1,4 +1,4 @@
-package com.capitalone.efit.utility;
+package com.hiucimon.utility;
 
 import java.io.BufferedReader;
 import java.io.IOException;
