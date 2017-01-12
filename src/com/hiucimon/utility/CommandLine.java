@@ -1,7 +1,6 @@
 package com.hiucimon.utility;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
@@ -9,7 +8,6 @@ import java.util.function.Consumer;
  * Created by ndb338 on 12/29/16.
  */
 public class CommandLine {
-    public int pid;
     public OutputCatcher stderr;
     public OutputCatcher stdout;
     private Process p;
@@ -19,53 +17,14 @@ public class CommandLine {
         myRuntime=Runtime.getRuntime();
     }
     public void Kill() {
-//        try {
-//            System.out.println("Kill "+pid);
-//            myRuntime.exec("kill -9 "+pid);
-//            System.out.println("Killed "+pid);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-        if (p!=null) {
-//            System.out.println("Destroy "+p);
-            p.destroy();
-        }
-    }
-    public void PID() {
-        if(p.getClass().getName().equals("java.lang.UNIXProcess")) {
-  /* get the PID on unix/linux systems */
-            try {
-                Field f = p.getClass().getDeclaredField("pid");
-                f.setAccessible(true);
-                pid = f.getInt(p);
-            } catch (Throwable e) {
-            }
-        }
-//        System.out.println("The PID is:"+pid);
+        if (p!=null) p.destroy();
     }
     public Integer RunCommandWithResults(String cmd,Consumer<String> callback) {
-        try {
-            p=myRuntime.exec(cmd);
-            PID();
-            stderr=new OutputCatcher(p.getErrorStream(),callback);
-            stdout=new OutputCatcher(p.getInputStream(),callback);
-            stderr.start();
-            stdout.start();
-            int result = p.waitFor();
-            return result;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            //e.printStackTrace();
-        } catch (CancellationException e) {
-            e.printStackTrace();
-        }
-        return COMMAND_FAILED;
+        return this.RunCommandWithResults(cmd,callback,callback);
     }
     public Integer RunCommandWithResults(String cmd,Consumer<String> callbacko,Consumer<String> callbacke) {
         try {
             p=myRuntime.exec(cmd);
-            PID();
             stderr=new OutputCatcher(p.getErrorStream(),callbacke);
             stdout=new OutputCatcher(p.getInputStream(),callbacko);
             stderr.start();
@@ -75,7 +34,7 @@ public class CommandLine {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
-            //e.printStackTrace();
+//            e.printStackTrace();
         } catch (CancellationException e) {
             e.printStackTrace();
         }
@@ -84,7 +43,6 @@ public class CommandLine {
     public Integer RunCommandWithResults(String cmd) {
         try {
             p=myRuntime.exec(cmd);
-            PID();
             stderr=new OutputCatcher(p.getErrorStream());
             stdout=new OutputCatcher(p.getInputStream());
             stderr.start();
@@ -94,7 +52,7 @@ public class CommandLine {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
-            //e.printStackTrace();
+//            e.printStackTrace();
         } catch (CancellationException e) {
             e.printStackTrace();
         }
@@ -103,25 +61,15 @@ public class CommandLine {
     public Integer RunCommandWithResults(String cmd, Integer timeout) {
         int result=-9999;
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Integer> future = (Future<Integer>) executor.submit(() -> {
-                        return this.RunCommandWithResults(cmd);
-                }
-        );
+        Future<Integer> future = executor.submit(() -> this.RunCommandWithResults(cmd));
         try {
             System.out.println("Started..");
             result=future.get(timeout, TimeUnit.SECONDS);
-            if (!future.isDone()) {
-                Kill();
-
-            }
-            Kill();
-            System.out.println("Finished!");
         } catch (TimeoutException e) {
             future.cancel(true);
             Kill();
-//            System.out.println("Terminated!");
         } catch (InterruptedException e) {
-            //e.printStackTrace();
+//            e.printStackTrace();
         } catch (CancellationException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -133,10 +81,7 @@ public class CommandLine {
     public Integer RunCommandWithResults(String cmd, Integer timeout,Consumer<String> callbacko,Consumer<String> callbacke) {
         int result=-9999;
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Integer> future = (Future<Integer>) executor.submit(() -> {
-                    return this.RunCommandWithResults(cmd,callbacko,callbacke);
-                }
-        );
+        Future<Integer> future = executor.submit(() -> this.RunCommandWithResults(cmd,callbacko,callbacke));
         try {
             System.out.println("Started..");
             result=future.get(timeout, TimeUnit.SECONDS);
@@ -147,7 +92,6 @@ public class CommandLine {
         } catch (TimeoutException e) {
             future.cancel(true);
             Kill();
-//            System.out.println("Terminated!");
         } catch (InterruptedException e) {
             //e.printStackTrace();
         } catch (CancellationException e) {
@@ -159,31 +103,7 @@ public class CommandLine {
         return result;
     }
     public Integer RunCommandWithResults(String cmd, Integer timeout,Consumer<String> callback) {
-        int result=-9999;
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Integer> future = (Future<Integer>) executor.submit(() -> {
-                    return this.RunCommandWithResults(cmd,callback);
-                }
-        );
-        try {
-            System.out.println("Started..");
-            result=future.get(timeout, TimeUnit.SECONDS);
-            if (result==-9999) {
-                Kill();
-            }
-            System.out.println("Finished!");
-        } catch (TimeoutException e) {
-            future.cancel(true);
-            Kill();
-//            System.out.println("Terminated!");
-        } catch (InterruptedException e) {
-            //e.printStackTrace();
-        } catch (CancellationException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        executor.shutdownNow();
+        int result=this.RunCommandWithResults(cmd,timeout,callback,callback);
         return result;
     }
     public static void main(String[] argv) {
@@ -235,6 +155,6 @@ public class CommandLine {
         int r3=c.RunCommandWithResults("clamscan -v DoCommandLineWithResults.iml",ca->System.out.println("Got:"+ca));
         int r4=c.RunCommandWithResults("clamscan -v DoCommandLineWithResults.iml",cao->System.out.println("Got out:"+cao),cae->System.out.println("Got err:"+cae));
         int r5=c.RunCommandWithResults("clamscan -v DoCommandLineWithResults.iml",1,cao->System.out.println("Got #out:"+cao),cae->System.out.println("Got #err:"+cae));
-        int r6=c.RunCommandWithResults("ping localhost",1,cao->System.out.println("Got #out:"+cao),cae->System.out.println("Got #err:"+cae));
+        int r6=c.RunCommandWithResults("ping localhost",5,cao->System.out.println("Got #out:"+cao),cae->System.out.println("Got #err:"+cae));
     }
 }
