@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="docommandlinewithresults">
+    <output-path>$PROJECT_DIR$/out/artifacts/docommandlinewithresults</output-path>
+    <root id="archive" name="docommandlinewithresults.jar">
+      <element id="module-output" name="DoCommandLineWithResults" />
+    </root>
+  </artifact>
+</component>
